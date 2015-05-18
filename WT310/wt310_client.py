@@ -91,20 +91,26 @@ def powermeter_driver():
                       pm_cmd_timeout + "\t" + str(pm_timeout) + "\t" + \
                       pm_cmd_update_interval + "\t" + str(pm_update_interval) 
 
-    pm_args = shlex.split(pm_command_line)
-    print "Executing PM Command:{}\n".format(pm_args)
+
+    if sys.platform == 'win32':
+        pm_args = pm_command_line.split()
+        print "Executing PM Command:{}\n".format(pm_args)
+    else:
+        pm_args = shlex.split(pm_command_line)
+        print "Executing PM Command:{}\n".format(pm_args)
 
     # Execute command
     try:
         p = Popen(pm_args, stdin = None, stdout = PIPE, stderr = PIPE, shell = False)
     except:
         print "Power meter communication error\n"
+        sys.exit(2) # Abnormal termination
 
-    # time.sleep(5)
     output = p.communicate()[0]
     print(p.returncode)
 
-    return
+
+    return p.returncode
 
     
 
@@ -170,9 +176,11 @@ if __name__ == "__main__":
     parse_cmd_line()
     # Call powermeter driver
     powermeter_driver()
+    sys.exit() # Successful termination: Default 0
 else:
     # Parse XML Config file
     print "XML Parsing not found\n"
     # parse_xml_config()
     # # Initialize global variables
     # init_global_vars()
+    sys.exit() # Successful termination: Default 0
