@@ -41,14 +41,16 @@ int pm_parameters::write_csv(string filename){
 	itime.get_data_all(it_all);
 	
 	/*Verify size match*/
-	if (!(ts_all.size() == v_all.size() == i_all.size() == p_all.size() == e_all.size() == it_all.size())){
+	if ((ts_all.size() != v_all.size()) || (ts_all.size() != i_all.size()) || (ts_all.size() != p_all.size()) || \
+		(ts_all.size() != e_all.size()) || (ts_all.size() != it_all.size())){
 		cout << "Size mismatch" << endl;
+		exit(EXIT_FAILURE);
 	}
 
 	/*Write to csv file*/
 	ofstream myfile;
 	myfile.open(&filename[0]);
-	myfile << "voltage, current, power, energy, time\n";
+	myfile << "Voltage (V), Current (A), Active Power (Watt), Accumulated Energy (Watt-Hour), Elapsed Time (Seconds)\n";
 	for (int i = 0; i < v_all.size(); i++){
 		myfile << v_all[i] << ",\t" << i_all[i] << ",\t" << \
 			p_all[i] << ",\t" << e_all[i] << ",\t" << \

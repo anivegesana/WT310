@@ -33,4 +33,6 @@ int main(int argc, char **argv){
 	wt310_params.write_csv(wt310_settings.csv_file);
 
 	cout << "Elapsed Time:\t" << wt310_settings.elapsed_time() << "seconds" << endl;
+
+	exit(EXIT_SUCCESS);
 }
