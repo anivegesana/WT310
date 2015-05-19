@@ -117,6 +117,7 @@ def powermeter_driver():
     print(p.returncode)
 
     if p.returncode != 0:
+        print "Powermeter driver error\n"
         sys.exit(2)
 
     return
@@ -179,7 +180,7 @@ def parse_cmd_line():
         "\npm_mode = "+pm_mode+\
         "\npm_update_interval (seconds) = "+str(pm_update_interval)+\
         "\npm_timeout (seconds) = "+str(pm_timeout)+\
-        "\npm_action = "+pm_action+\
+        "\npm_action = "+str(pm_action)+\
         "\n"
 
 
