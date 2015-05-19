@@ -47,6 +47,10 @@ Options:
                 Powermeter session timeout in seconds
                 Default: 300 seconds (5 Minutes)
 
+         --pmaction
+                Powermeter special actions [PING | HARD_RESET | SOFT_RESET]
+                Default: None
+
          -h, --help
                 Displays all the available option
 """
@@ -79,7 +83,7 @@ pm_timeout = 300 #Seconds
 pm_csv = os.path.join(this_file_path, 'wt310.csv')
 pm_update_interval = 1 #Seconds
 pm_mode = 'DC' # DC | RMS
-
+pm_action = None # PING | HARD_RESET | SOFT_RESET
 
 # Powermeter Driver
 def powermeter_driver():
@@ -90,6 +94,9 @@ def powermeter_driver():
                       pm_cmd_mode + "\t" + pm_mode + "\t" + \
                       pm_cmd_timeout + "\t" + str(pm_timeout) + "\t" + \
                       pm_cmd_update_interval + "\t" + str(pm_update_interval) 
+
+    if pm_action is not None:
+        pm_command_line += "\t--"+pm_action
 
 
     if sys.platform == 'win32':
@@ -109,8 +116,10 @@ def powermeter_driver():
     output = p.communicate()[0]
     print(p.returncode)
 
+    if p.returncode != 0:
+        sys.exit(2)
 
-    return p.returncode
+    return
 
     
 
@@ -130,10 +139,11 @@ def parse_cmd_line():
     global pm_csv
     global pm_update_interval
     global pm_mode
+    global pm_action
     
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hw:", ["help", "pmip=", "pmexe=", "pminf=", "pmcsv=", \
-                                                         "pminterval=", "pmmode=", "pmtimeout="])
+                                                         "pminterval=", "pmmode=", "pmaction=", "pmtimeout="])
     except getopt.GetoptError as err:
         # print help information and exit:
         print str(err) 
@@ -157,6 +167,8 @@ def parse_cmd_line():
             pm_mode = val
         elif switch == "--pmtimeout":
             pm_timeout = int(val)
+        elif switch == "--pmaction":
+            pm_action = val
         else:
             assert False, "unhandled option"
 
@@ -167,6 +179,7 @@ def parse_cmd_line():
         "\npm_mode = "+pm_mode+\
         "\npm_update_interval (seconds) = "+str(pm_update_interval)+\
         "\npm_timeout (seconds) = "+str(pm_timeout)+\
+        "\npm_action = "+pm_action+\
         "\n"
 
 
