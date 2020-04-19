@@ -53,10 +53,16 @@ pm_controller::pm_controller(){
 	begin_time = clock();
 }
 
+// I want to know who did this
+#undef interface
+
 int pm_controller::init_ctl(pm_settings const& settings_t){
 
 	/* Set ip address*/
-	set_ipaddress(settings_t.ipaddress);
+	if (settings_t.interface.compare(K_inf_ethernet) == 0) // settings_t.interface.compare(K_inf_ethernet)
+		set_ipaddress(settings_t.ipaddress);
+	else
+		set_usb(settings_t.ipaddress);
 
 	/* Hard Reset power meter*/
 	if (settings_t.initialize){
@@ -341,6 +347,32 @@ int pm_controller::set_ipaddress(string pm_ipaddress){
 	ret = TmcInitialize(TM_CTL_VXI11, &ipaddress[0u], &id); //VXI-11 protocol
 	if (ret != 0){
 		cout << "IP Address not found" << endl;
+		exit(EXIT_FAILURE);
+	}
+
+	return 1;
+}
+
+int pm_controller::set_usb(string pm_usbaddress){
+	int ret;
+	DEVICELIST list[127];
+	char encode[256];
+	int num;
+
+	if (true) { // TODO: see if pm_usbaddress is empty or not
+		TmcSearchDevices(TM_CTL_USBTMC2,list,127,&num,NULL);
+		if (num == 0) {
+			cout << "Unable to find any USB devices" << endl;
+			exit(EXIT_FAILURE);
+		}
+	} else {
+		const char * address = pm_usbaddress.c_str();
+		TmcEncodeSerialNumber(encode,256,(char *)address);
+	}
+
+	ret = TmcInitialize( TM_CTL_USBTMC2, list[0].adr, &id ); 
+	if (ret != 0){
+		cout << "Unable to connect via USB" << endl;
 		exit(EXIT_FAILURE);
 	}
 

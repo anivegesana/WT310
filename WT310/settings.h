@@ -17,9 +17,9 @@ extern const string K_mode_rms;
 class pm_settings
 {
 	clock_t begin_time;			//Constructor generated time
-	string interface;			// USB, ETHERNET
 
 public:
+	string interface;			// USB, ETHERNET
 	string ipaddress;			// XXX.XXX.XXX.XXX
 	int log_duration;
 	string mode;				// RMS, DC

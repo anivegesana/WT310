@@ -21,6 +21,7 @@ class pm_controller{
 	int set_mode(string pm_mode);
 	int set_timeout(int pm_timeout);
 	int get_model_info();
+	int set_usb(string pm_usbaddress);
 	int set_ipaddress(string pm_ipaddress);
 	int set_data_update_rate(string pm_rate);
 	int init_integrator(int pm_timer);
