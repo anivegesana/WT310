@@ -1,0 +1,6 @@
+*.obj
+WT310.exe
+tmctl.dll
+YKMUSB.dll
+tmctl64.dll
+YKMUSB64.dll
