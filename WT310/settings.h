@@ -30,7 +30,7 @@ public:
 
 	pm_settings();
 	double elapsed_time();
-	int parse_cmd_line(int argc, char **argv);
+	void parse_cmd_line(int argc, char **argv);
 	void print_settings();
 	void print_help();
 };

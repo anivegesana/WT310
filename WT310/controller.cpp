@@ -59,7 +59,7 @@ pm_controller::pm_controller(){
 int pm_controller::init_ctl(pm_settings const& settings_t){
 
 	/* Set ip address*/
-	if (settings_t.interface.compare(K_inf_ethernet) == 0) // settings_t.interface.compare(K_inf_ethernet)
+	if (settings_t.interface.compare(K_inf_ethernet) == 0)
 		set_ipaddress(settings_t.ipaddress);
 	else
 		set_usb(settings_t.ipaddress);
@@ -98,7 +98,7 @@ double pm_controller::read_value(e_wt_functions item_number){
 	string yoko_cmd, yoko_buf;
 	float ieee_float = 0.0;
 	char *ieee_4byte;
-	int buf_len;
+	size_t buf_len;
 	
 	ieee_4byte = (char *)&ieee_float;
 
@@ -120,7 +120,6 @@ double pm_controller::read_value(e_wt_functions item_number){
 }
 
 int pm_controller::set_display_group(){
-	int ret;
 	string yoko_cmd;
 
 	/*Set display group A-D*/
@@ -305,7 +304,7 @@ int pm_controller::init_integrator(int pm_timer){
 	/*Verify if integrator set*/
 	string yoko_exp(yoko_cmd);
 	string yoko_buf;
-	int cmd_len;
+	size_t cmd_len;
 	yoko_exp.push_back('\n');
 	yoko_cmd.assign(YCMD_INT_TIMER);
 	yoko_cmd.push_back('?');
@@ -483,7 +482,6 @@ int pm_controller::rst_ctl(){
 }
 
 int pm_controller::update_element(pm_parameters& params_t, e_wt_functions item){
-	int ret;
 	vector<double> val_vect;
 
 	val_vect.push_back(read_value(item));
@@ -504,9 +502,7 @@ int pm_controller::update_data_memory(pm_parameters& params_t){
 	return 1;
 }
 
-
 int pm_controller::poll_data(pm_settings const& settings_t, pm_parameters& params_t){
-	int ret;
 	int update_rate = settings_t.data_update_interval;
 	int timeout = settings_t.log_duration + 2;
 	mytime polltime;

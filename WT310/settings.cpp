@@ -68,7 +68,7 @@ double pm_settings::elapsed_time(){
 }
 
 
-int pm_settings::parse_cmd_line(int argc, char **argv){
+void pm_settings::parse_cmd_line(int argc, char **argv){
 	/* GNU getopt*/
 	int c;
 	while (1)

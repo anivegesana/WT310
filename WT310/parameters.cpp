@@ -29,7 +29,6 @@ pm_parameters::pm_parameters(){
 }
 
 int pm_parameters::write_csv(string filename){
-	int ret;
 	vector<time_t> ts_all;
 	vector<double> v_all, i_all, p_all, e_all, it_all;
 
