@@ -1,6 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <string>
 #include "controller.h"
 #include <Windows.h>
 #include "tmctl.h"
@@ -502,12 +503,22 @@ int pm_controller::update_data_memory(pm_parameters& params_t){
 	return 1;
 }
 
+bool iskeypressed()
+{
+  return WaitForSingleObject(
+    GetStdHandle( STD_INPUT_HANDLE ),
+    10
+    ) == WAIT_OBJECT_0;
+}
+
 int pm_controller::poll_data(pm_settings const& settings_t, pm_parameters& params_t){
+    typedef void (*SignalHandlerPointer)(int);  
+
 	int update_rate = settings_t.data_update_interval;
 	int timeout = settings_t.log_duration + 2;
 	mytime polltime;
 
-	while (polltime.elapsed_seconds() < timeout){
+	while (polltime.elapsed_seconds() < timeout && !iskeypressed()){
 		update_data_memory(params_t);
 		/* Wait for data update interval*/
 		std::this_thread::sleep_for(std::chrono::seconds(update_rate));
