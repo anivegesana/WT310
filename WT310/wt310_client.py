@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 usage_text = """
 LPIRC Powermeter Driver
 =======================
-@2015 - HELPS, Purdue University
+@2015 - 2020 HELPS, Purdue University
 
 
 Main Tasks:
@@ -13,11 +13,11 @@ Main Tasks:
 
 Requirements:
 -------------
-1. Python v2.7.3
+1. Python 3
 
 Usage:
 ------
-referee.py [OPTION]...
+referee.py [OPTION]... [moncmd]
 Options:
          -w, --pmip
                 IP address of the powermeter in format <xxx.xxx.xxx.xxx>
@@ -51,12 +51,20 @@ Options:
                 Powermeter special actions [PING | HARD_RESET | SOFT_RESET]
                 Default: None
 
+         --moncsv
+                CSV to store program power, run time, and error status
+                Default: ./monitor.csv
+
+         moncmd
+                Command to run while having the power meter on
+                Default: None
+
          -h, --help
                 Displays all the available option
 """
 
 import getopt, sys, re, glob, os                                          # Parser for command-line options
-from datetime import datetime,date,time                                   # Python datetime for session timeout
+from datetime import datetime,date                                        # Python datetime for session timeout
 import shlex                                                              # For constructing popen shell arguments
 from subprocess import Popen, PIPE                                        # Non-blocking program execution
 import time                                                               # For sleep
@@ -84,6 +92,10 @@ pm_csv = os.path.join(this_file_path, 'wt310.csv')
 pm_update_interval = 1 #Seconds
 pm_mode = 'DC' # DC | RMS
 pm_action = None # PING | HARD_RESET | SOFT_RESET
+pm_out = None
+# Program monitoring
+monitor_cmd = []
+monitor_csv = os.path.join(this_file_path, 'monitor.csv')
 
 # Powermeter Driver
 def powermeter_driver():
@@ -101,23 +113,75 @@ def powermeter_driver():
 
     if sys.platform == 'win32':
         pm_args = pm_command_line.split()
-        print "Executing PM Command:{}\n".format(pm_args)
+        print("Executing PM Command:{}\n".format(pm_args))
     else:
         pm_args = shlex.split(pm_command_line)
-        print "Executing PM Command:{}\n".format(pm_args)
+        print("Executing PM Command:{}\n".format(pm_args))
+
+    err = ""
 
     # Execute command
-    try:
-        p = Popen(pm_args, stdin = None, stdout = PIPE, stderr = PIPE, shell = False)
-    except:
-        print "Power meter communication error\n"
-        sys.exit(2) # Abnormal termination
+    if len(monitor_cmd) == 0:
+        try:
+            p = Popen(pm_args, stdin = None, stdout = pm_out, stderr = pm_out, shell = False)
+        except:
+            print("Power meter communication error\n")
+            sys.exit(2) # Abnormal termination
 
-    output = p.communicate()[0]
-    print(p.returncode)
+        output = p.communicate()[0]
+        print(p.returncode)
+    else:
+        print("Monitoring command:{}\n".format(monitor_cmd))
+
+        # start power meter
+        try:
+            p = Popen(pm_args, stdin = PIPE, stdout = PIPE, stderr = pm_out, shell = False)
+        except:
+            print("Power meter communication error\n")
+            sys.exit(2) # Abnormal termination
+
+        # wait for the stdout
+        while p.poll() is None and b'Start' not in p.stdout.readline():
+            pass
+
+        if p.poll() is None:
+            start = datetime.now()
+
+            # start and wait for completion of the program
+            proc = Popen(monitor_cmd)
+            while proc.poll() is None and p.poll() is None:
+                time.sleep(pm_update_interval)
+
+            # stop early if needed
+            if proc.poll() is not None:
+                try:
+                    p.stdin.write("STOP\n")
+                except:
+                    pass
+                error = "" if proc.poll() == 0 else "RTE"
+            else:
+                proc.terminate()
+                error = "TLE" #152 # TLE => SIGXCPU
+
+            td = (datetime.now() - start).total_seconds()
+            p.stdin.close()
+            p.wait()
+
+            with open(pm_csv, 'r') as pm_csv_file:
+                power = pm_csv_file.readlines()[-1].split(',')[3].strip()
+                try:
+                    power = float(power)
+                except:
+                    power = -1.0
+
+            with open(monitor_csv, 'w') as monitor_csv_file:
+                monitor_csv_file.write("power,time,error\n")
+                monitor_csv_file.write("%s,%s,%s\n" % (power, td, err))
+
+        print(p.returncode) 
 
     if p.returncode != 0:
-        print "Powermeter driver error\n"
+        print("Powermeter driver error\n")
         sys.exit(2)
 
     return
@@ -126,7 +190,7 @@ def powermeter_driver():
 
 # Script usage function
 def usage():
-    print usage_text
+    print(usage_text)
 
 
 #++++++++++++++++++++++++++++++++ Parse Command-line Input +++++++++++++++++++++++++++++++
@@ -141,13 +205,15 @@ def parse_cmd_line():
     global pm_update_interval
     global pm_mode
     global pm_action
+    global monitor_cmd
+    global monitor_csv
     
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hw:", ["help", "pmip=", "pmexe=", "pminf=", "pmcsv=", \
+        opts, monitor_cmd = getopt.getopt(sys.argv[1:], "hw:", ["help", "pmip=", "pmexe=", "pminf=", "pmcsv=", \
                                                          "pminterval=", "pmmode=", "pmaction=", "pmtimeout="])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print str(err) 
+        print(str(err))
         usage()
         sys.exit(2)
     for switch, val in opts:
@@ -170,10 +236,12 @@ def parse_cmd_line():
             pm_timeout = int(val)
         elif switch == "--pmaction":
             pm_action = val
+        elif switch == "--moncsv":
+            monitor_csv = os.path.join(this_file_path, val)
         else:
             assert False, "unhandled option"
 
-    print "\npm_exe = "+pm_executable+\
+    print("\npm_exe = "+pm_executable+\
         "\npm_ipaddress = "+pm_ipaddress+\
         "\npm_interface = "+pm_interface+\
         "\npm_csv = "+pm_csv+\
@@ -181,7 +249,9 @@ def parse_cmd_line():
         "\npm_update_interval (seconds) = "+str(pm_update_interval)+\
         "\npm_timeout (seconds) = "+str(pm_timeout)+\
         "\npm_action = "+str(pm_action)+\
-        "\n"
+        "\nmonitor_cmd = "+str(' '.join(shlex.quote(arg) for arg in monitor_cmd))+\
+        "\nmonitor_csv = "+monitor_csv+\
+        "\n")
 
 
 #++++++++++++++++++++++++++++++++ Script enters here at beginning +++++++++++++++++++++++++++++++++++
@@ -190,11 +260,11 @@ if __name__ == "__main__":
     parse_cmd_line()
     # Call powermeter driver
     powermeter_driver()
-    sys.exit() # Successful termination: Default 0
-else:
+    sys.exit(0) # Successful termination: Default 0
+# else:
     # Parse XML Config file
-    print "XML Parsing not found\n"
+    # print("XML Parsing not found\n")
     # parse_xml_config()
     # # Initialize global variables
     # init_global_vars()
-    sys.exit() # Successful termination: Default 0
+    # sys.exit() # Successful termination: Default 0

@@ -3,6 +3,7 @@
 #include <thread>
 #include <string>
 #include "controller.h"
+#include <future>
 #include <Windows.h>
 #include "tmctl.h"
 
@@ -503,12 +504,11 @@ int pm_controller::update_data_memory(pm_parameters& params_t){
 	return 1;
 }
 
-bool iskeypressed()
-{
-  return WaitForSingleObject(
-    GetStdHandle( STD_INPUT_HANDLE ),
-    10
-    ) == WAIT_OBJECT_0;
+// async io code from https://gist.github.com/vmrob/ff20420a20c59b5a98a1
+std::string GetLineFromCin() {
+    std::string line;
+    std::getline(std::cin, line);
+    return line;
 }
 
 int pm_controller::poll_data(pm_settings const& settings_t, pm_parameters& params_t){
@@ -518,10 +518,14 @@ int pm_controller::poll_data(pm_settings const& settings_t, pm_parameters& param
 	int timeout = settings_t.log_duration + 2;
 	mytime polltime;
 
-	while (polltime.elapsed_seconds() < timeout && !iskeypressed()){
+	cout << "Start" << endl;
+
+    auto future = std::async(std::launch::async, GetLineFromCin);
+
+	while (polltime.elapsed_seconds() < timeout &&
+			(future.wait_for(std::chrono::seconds(update_rate)) != std::future_status::ready)){
 		update_data_memory(params_t);
 		/* Wait for data update interval*/
-		std::this_thread::sleep_for(std::chrono::seconds(update_rate));
 		cout << polltime.elapsed_seconds() << "seconds" << endl;
 	}
 

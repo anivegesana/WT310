@@ -11,5 +11,6 @@ if not errorlevel 1 (
 	copy ..\YOKOGAWA\tmctl5101\dll\tmctl.dll .
 	copy ..\YOKOGAWA\tmctl5101\dll\YKMUSB.dll .
 )
+copy ..\WT310\wt310_client.py .
 
 del *.obj

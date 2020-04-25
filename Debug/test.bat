@@ -1,0 +1,1 @@
+@C:\lpcvc\python\python.exe wt310_client.py --pminf USB C:\Windows\System32\bash.exe -c 'ssh -t pi@referee.local python3 code.py'

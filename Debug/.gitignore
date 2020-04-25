@@ -5,3 +5,5 @@ YKMUSB.dll
 tmctl64.dll
 YKMUSB64.dll
 wt310.csv
+monitor.csv
+wt310_client.py
