@@ -13,6 +13,7 @@ const string T100MS("100MS");
 const string T250MS("250MS");
 const string T500MS("500MS");
 const string T1S("1S");
+const string K_inf_none("NONE");
 
 /*Integrator States*/
 const string INT_STATE_START("STAR");
@@ -63,8 +64,10 @@ int pm_controller::init_ctl(pm_settings const& settings_t){
 	/* Set ip address*/
 	if (settings_t.interface.compare(K_inf_ethernet) == 0)
 		set_ipaddress(settings_t.ipaddress);
-	else
+	else if (settings_t.interface.compare(K_inf_usb) == 0)
 		set_usb(settings_t.ipaddress);
+	else
+		return 1;
 
 	/* Hard Reset power meter*/
 	if (settings_t.initialize){
@@ -512,8 +515,6 @@ std::string GetLineFromCin() {
 }
 
 int pm_controller::poll_data(pm_settings const& settings_t, pm_parameters& params_t){
-    typedef void (*SignalHandlerPointer)(int);  
-
 	int update_rate = settings_t.data_update_interval;
 	int timeout = settings_t.log_duration + 2;
 	mytime polltime;
@@ -522,11 +523,28 @@ int pm_controller::poll_data(pm_settings const& settings_t, pm_parameters& param
 
     auto future = std::async(std::launch::async, GetLineFromCin);
 
-	while (polltime.elapsed_seconds() < timeout &&
-			(future.wait_for(std::chrono::seconds(update_rate)) != std::future_status::ready)){
-		update_data_memory(params_t);
-		/* Wait for data update interval*/
-		cout << polltime.elapsed_seconds() << "seconds" << endl;
+	if (settings_t.interface.compare(K_inf_none) == 0) {
+		vector<double> val_vect;
+
+		val_vect.push_back(0.0);
+		params_t.push_value(val_vect, t_voltage);
+		params_t.push_value(val_vect, t_current);
+		params_t.push_value(val_vect, t_power);
+		params_t.push_value(val_vect, t_energy);
+		params_t.push_value(val_vect, t_itime);
+
+		while (polltime.elapsed_seconds() < timeout &&
+				(future.wait_for(std::chrono::seconds(update_rate)) != std::future_status::ready)){
+			/* Wait for data update interval*/
+			cout << polltime.elapsed_seconds() << "seconds" << endl;
+		}
+	} else {
+		while (polltime.elapsed_seconds() < timeout &&
+				(future.wait_for(std::chrono::seconds(update_rate)) != std::future_status::ready)){
+			update_data_memory(params_t);
+			/* Wait for data update interval*/
+			cout << polltime.elapsed_seconds() << "seconds" << endl;
+		}
 	}
 
 	return 1;

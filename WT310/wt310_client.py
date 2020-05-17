@@ -28,7 +28,7 @@ Options:
                 Default: ./WT310.exe
 
          --pminf
-                Powermeter interface [ETHERNET | USB]
+                Powermeter interface [ETHERNET | USB | NONE]
                 Default: ETHERNET
 
          --pmcsv
@@ -109,7 +109,6 @@ def powermeter_driver():
 
     if pm_action is not None:
         pm_command_line += "\t--"+pm_action
-
 
     if sys.platform == 'win32':
         pm_args = pm_command_line.split()

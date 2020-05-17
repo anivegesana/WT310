@@ -6,6 +6,7 @@
 /* Power Meter Interfaces*/
 const string K_inf_ethernet = "ETHERNET";
 const string K_inf_usb = "USB";
+const string K_inf_none = "NONE";
 /* Power Meter Modes*/
 const string K_mode_dc = "DC";
 const string K_mode_rms = "RMS";
@@ -27,7 +28,7 @@ void pm_settings::print_help(){
 	cout << "WT310.exe" << "[options]" << endl <<
 		"Options:" << endl <<
 		"\t--help    Print this help" << endl <<
-		"\t--" << cmd_interface << "\t[" << K_inf_ethernet << "|" << K_inf_usb << "]" << endl <<
+		"\t--" << cmd_interface << "\t[" << K_inf_ethernet << "|" << K_inf_usb << "|" << K_inf_none << "]" << endl <<
 		"\t--" << cmd_ipaddress << "\t<192.168.1.3>" << endl <<
 		"\t--" << cmd_log_duration << "\t<300> seconds" << endl <<
 		"\t--" << cmd_csv_file << "\t<wt310.csv>" << endl <<
@@ -154,7 +155,7 @@ void pm_settings::parse_cmd_line(int argc, char **argv){
 
 		case 'f':
 			tmps.assign(optarg);
-			if ((tmps.compare(K_inf_ethernet)) && (tmps.compare(K_inf_usb))){
+			if ((tmps.compare(K_inf_ethernet)) && (tmps.compare(K_inf_usb)) && (tmps.compare(K_inf_none))){
 				print_help();
 				exit(EXIT_FAILURE);
 			}
