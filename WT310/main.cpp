@@ -35,7 +35,6 @@ int main(int argc, char **argv){
 		yokogawa.integrator_start();
 		yokogawa.poll_data(wt310_settings, wt310_params);
 		yokogawa.integrator_stop();
-		wt310_params.write_csv(wt310_settings.csv_file);
 	}
 		
 	wt310_params.write_csv(wt310_settings.csv_file);

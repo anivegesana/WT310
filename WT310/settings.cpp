@@ -1,7 +1,7 @@
 #include <vector>
 #include <iostream>
 #include "settings.h"
-#include "getopt.h"
+#include <getopt.h>
 
 /* Power Meter Interfaces*/
 const string K_inf_ethernet = "ETHERNET";

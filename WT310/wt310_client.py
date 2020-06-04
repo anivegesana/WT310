@@ -105,7 +105,8 @@ def powermeter_driver():
                       pm_cmd_ipaddress + "\t" + pm_ipaddress + "\t" + \
                       pm_cmd_mode + "\t" + pm_mode + "\t" + \
                       pm_cmd_timeout + "\t" + str(pm_timeout) + "\t" + \
-                      pm_cmd_update_interval + "\t" + str(pm_update_interval) 
+                      pm_cmd_update_interval + "\t" + str(pm_update_interval) + "\t" + \
+					  pm_cmd_csv + "\t" + pm_csv
 
     if pm_action is not None:
         pm_command_line += "\t--"+pm_action
@@ -117,7 +118,7 @@ def powermeter_driver():
         pm_args = shlex.split(pm_command_line)
         print("Executing PM Command:{}\n".format(pm_args))
 
-    err = ""
+    error = ""
 
     # Execute command
     if len(monitor_cmd) == 0:
@@ -134,36 +135,44 @@ def powermeter_driver():
 
         # start power meter
         try:
-            p = Popen(pm_args, stdin = PIPE, stdout = PIPE, stderr = pm_out, shell = False)
+            p = Popen(pm_args, stdin = PIPE, stdout = PIPE, stderr = PIPE, shell = False, universal_newlines=True)
         except:
             print("Power meter communication error\n")
             sys.exit(2) # Abnormal termination
 
         # wait for the stdout
-        while p.poll() is None and b'Start' not in p.stdout.readline():
+        while p.poll() is None and 'Start' not in p.stdout.readline():
             pass
 
         if p.poll() is None:
             start = datetime.now()
 
             # start and wait for completion of the program
-            proc = Popen(monitor_cmd)
-            while proc.poll() is None and p.poll() is None:
+            proc = Popen(monitor_cmd, universal_newlines=True)
+            while proc.poll() is None and (datetime.now() - start).seconds < pm_timeout + 2:
                 time.sleep(pm_update_interval)
 
-            # stop early if needed
-            if proc.poll() is not None:
-                try:
-                    p.stdin.write("STOP\n")
-                except:
+			# stop power meter
+            try:
+                p.stdin.write("STOP\n")
+                p.stdin.close()
+                for l in p.stdout:
                     pass
-                error = "" if proc.poll() == 0 else "RTE"
-            else:
+                p.stdout.close()
+                for l in p.stderr:
+                    pass
+                p.stderr.close()
+            except:
+                pass
+            error = "" if proc.poll() == 0 else "RTE"
+
+            # stop early if needed
+            if proc.poll() is None:
                 proc.terminate()
                 error = "TLE" #152 # TLE => SIGXCPU
-
+            
             td = (datetime.now() - start).total_seconds()
-            p.stdin.close()
+            proc.wait()
             p.wait()
 
             with open(pm_csv, 'r') as pm_csv_file:
@@ -175,7 +184,7 @@ def powermeter_driver():
 
             with open(monitor_csv, 'w') as monitor_csv_file:
                 monitor_csv_file.write("power,time,error\n")
-                monitor_csv_file.write("%s,%s,%s\n" % (power, td, err))
+                monitor_csv_file.write("%s,%s,%s\n" % (power, td, error))
 
         print(p.returncode) 
 

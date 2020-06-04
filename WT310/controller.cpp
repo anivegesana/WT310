@@ -4,8 +4,7 @@
 #include <string>
 #include "controller.h"
 #include <future>
-#include <Windows.h>
-#include "tmctl.h"
+#include <tmctl.h>
 
 /*Constants*/
 const int MY_1SEC = 1000; //milliseconds
@@ -526,7 +525,7 @@ int pm_controller::poll_data(pm_settings const& settings_t, pm_parameters& param
 	if (settings_t.interface.compare(K_inf_none) == 0) {
 		vector<double> val_vect;
 
-		val_vect.push_back(0.0);
+		val_vect.push_back(1.0);
 		params_t.push_value(val_vect, t_voltage);
 		params_t.push_value(val_vect, t_current);
 		params_t.push_value(val_vect, t_power);
@@ -546,6 +545,11 @@ int pm_controller::poll_data(pm_settings const& settings_t, pm_parameters& param
 			cout << polltime.elapsed_seconds() << "seconds" << endl;
 		}
 	}
+
+	// hack to stop the other thread
+	std::cin.putback('S');
+	std::cin.putback('\r');
+	std::cin.putback('\n');
 
 	return 1;
 }
